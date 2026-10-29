@@ -1,0 +1,2257 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#100f20" />
+    <meta name="description" content="WHALE DLC — Minecraft client, лицензии и личный кабинет." />
+    <title>WHALE DLC — Minecraft Client</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js">
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+        /* ─── базовый сброс ─── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 500;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            color: #edeaf5;
+            min-height: 100vh;
+            line-height: 1.5;
+            overflow-x: hidden;
+            position: relative;
+            /* ─── фоновое изображение ─── */
+            background: #1a1a2e url('https://moewalls.com/wp-content/uploads/2026/08/butterflies-garden-minecraft-thumb-728x410.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+        /* ─── затемнение для читаемости ─── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: rgba(10, 8, 20, 0.55);
+            backdrop-filter: blur(2px);
+        }
+
+        /* ─── анимированные бабочки (поверх всего) ─── */
+        .butterfly-container {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .butterfly {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 30 Q20 10 10 30 Q0 50 20 60 Q30 70 50 60 Q70 70 80 60 Q100 50 90 30 Q80 10 50 30 Z" fill="%23fcd34d" opacity="0.8"/><path d="M50 30 Q30 50 20 70 Q10 90 40 80 Q50 75 50 60 Q50 75 60 80 Q90 90 80 70 Q70 50 50 30 Z" fill="%23fbbf24" opacity="0.6"/><circle cx="50" cy="45" r="5" fill="%23333"/></svg>') no-repeat center/contain;
+            animation: fly 18s linear infinite;
+            opacity: 0.7;
+        }
+        .butterfly:nth-child(1) {
+            top: 10%;
+            left: -10%;
+            animation-duration: 22s;
+            animation-delay: 0s;
+            width: 50px;
+            height: 50px;
+        }
+        .butterfly:nth-child(2) {
+            top: 30%;
+            left: -20%;
+            animation-duration: 26s;
+            animation-delay: 4s;
+            width: 35px;
+            height: 35px;
+        }
+        .butterfly:nth-child(3) {
+            top: 60%;
+            left: -15%;
+            animation-duration: 20s;
+            animation-delay: 8s;
+            width: 45px;
+            height: 45px;
+        }
+        .butterfly:nth-child(4) {
+            top: 80%;
+            left: -5%;
+            animation-duration: 24s;
+            animation-delay: 2s;
+            width: 30px;
+            height: 30px;
+        }
+        .butterfly:nth-child(5) {
+            top: 45%;
+            left: -25%;
+            animation-duration: 28s;
+            animation-delay: 6s;
+            width: 55px;
+            height: 55px;
+        }
+        @keyframes fly {
+            0% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(calc(100vw + 200px), calc(-20vh + 40vh * var(--y, 0.5))) rotate(720deg) scale(1.2);
+                opacity: 0;
+            }
+        }
+        /* ─── остальные стили (как в предыдущей версии) ─── */
+        .container {
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+        .card-live {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 28px 8px 28px 8px;
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            padding: 28px 26px;
+        }
+        .card-live:hover {
+            border-radius: 12px 28px 12px 28px;
+            border-color: rgba(251, 146, 60, 0.25);
+            background: rgba(0, 0, 0, 0.5);
+            transform: translateY(-6px) rotate(-0.5deg);
+        }
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            padding: 14px 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px dashed rgba(251, 146, 60, 0.15);
+        }
+        .nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 22px;
+            letter-spacing: -0.04em;
+            font-family: 'Manrope', sans-serif;
+        }
+        .brand .logo-squiggle {
+            display: inline-block;
+            width: 34px;
+            height: 34px;
+            border-radius: 30% 70% 40% 60% / 50% 40% 60% 50%;
+            background: linear-gradient(135deg, #fb923c, #a855f7);
+            text-align: center;
+            line-height: 34px;
+            font-size: 18px;
+            color: #0c0a14;
+            transform: rotate(-6deg);
+        }
+        .brand span {
+            color: #fb923c;
+        }
+        .brand .dot-jitter {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #fb923c;
+            border-radius: 40% 60% 30% 70% / 50% 40% 60% 50%;
+            animation: jitter 3s ease-in-out infinite;
+        }
+        @keyframes jitter {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(-2px, 3px) scale(0.8);
+            }
+            66% {
+                transform: translate(3px, -2px) scale(1.1);
+            }
+        }
+        .shield-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(251, 146, 60, 0.08);
+            border: 1px solid rgba(251, 146, 60, 0.15);
+            border-radius: 40px 8px 40px 8px;
+            padding: 4px 14px 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #fb923c;
+            font-family: 'Manrope', sans-serif;
+            letter-spacing: 0.04em;
+            margin-left: 10px;
+        }
+        .shield-badge .shield-icon {
+            display: inline-block;
+            font-size: 14px;
+            animation: pulse-shield 2.2s ease-in-out infinite;
+        }
+        @keyframes pulse-shield {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.15);
+            }
+        }
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #c4bde0;
+            align-items: center;
+        }
+        .nav-links a {
+            position: relative;
+            transition: color 0.25s;
+            font-family: 'Manrope', sans-serif;
+            letter-spacing: 0.02em;
+            color: #edeaf5;
+        }
+        .nav-links a::before {
+            content: '~';
+            opacity: 0;
+            margin-right: 4px;
+            transition: opacity 0.2s;
+        }
+        .nav-links a:hover {
+            color: #fb923c;
+        }
+        .nav-links a:hover::before {
+            opacity: 1;
+        }
+        .btn {
+            padding: 10px 22px;
+            border-radius: 40px 10px 40px 10px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
+            font-family: 'Manrope', sans-serif;
+            border: 1px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            color: #edeaf5;
+        }
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.06);
+        }
+        .btn-ghost:hover {
+            background: rgba(251, 146, 60, 0.12);
+            border-color: #fb923c55;
+            transform: translateY(-3px) scale(1.02) rotate(-1deg);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #fb923c, #a855f7);
+            color: #0c0a14;
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 30px rgba(251, 146, 60, 0.25);
+        }
+        .btn-primary:hover {
+            transform: translateY(-4px) scale(1.04) rotate(0.5deg);
+            box-shadow: 0 16px 50px rgba(251, 146, 60, 0.4);
+        }
+        .btn-amber {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #1a1202;
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 30px rgba(245, 158, 11, 0.25);
+        }
+        .btn-amber:hover {
+            transform: translateY(-4px) scale(1.04) rotate(-0.5deg);
+        }
+        .btn-outline-light {
+            background: transparent;
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #d4cee8;
+        }
+        .btn-outline-light:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-2px) rotate(1deg);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #0c0a14;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        .btn-success:hover {
+            transform: translateY(-4px) scale(1.04);
+            box-shadow: 0 16px 50px rgba(16, 185, 129, 0.4);
+        }
+        .hero {
+            padding: 150px 0 70px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .hero .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+        .hero-content .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 18px 6px 14px;
+            background: rgba(251, 146, 60, 0.08);
+            border: 1px dashed rgba(251, 146, 60, 0.2);
+            border-radius: 40px 8px 40px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #fb923c;
+            letter-spacing: 0.04em;
+            margin-bottom: 22px;
+            font-family: 'Manrope', sans-serif;
+            backdrop-filter: blur(4px);
+        }
+        .hero-content .badge .live {
+            width: 8px;
+            height: 8px;
+            border-radius: 40% 60% 30% 70% / 50% 40% 60% 50%;
+            background: #fb923c;
+            animation: jitter 2s ease-in-out infinite;
+        }
+        .hero-content h1 {
+            font-size: clamp(48px, 9vw, 88px);
+            font-weight: 900;
+            line-height: 1.02;
+            letter-spacing: -0.04em;
+            margin-bottom: 18px;
+            font-family: 'Manrope', sans-serif;
+            color: #fff;
+            text-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+        .hero-content h1 .highlight {
+            background: linear-gradient(135deg, #fb923c, #a855f7, #fb923c);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 4s ease-in-out infinite alternate;
+        }
+        @keyframes shimmer {
+            0% {
+                background-position: 0% 50%;
+            }
+            100% {
+                background-position: 100% 50%;
+            }
+        }
+        .hero-content p {
+            font-size: 18px;
+            color: #ddd;
+            max-width: 460px;
+            line-height: 1.8;
+            margin-bottom: 28px;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
+        }
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .hero-sub {
+            margin-top: 18px;
+            font-size: 14px;
+            color: #bbb;
+            letter-spacing: 0.02em;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+        }
+        .shield-badge-hero {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 6px 18px 6px 14px;
+            background: rgba(251, 146, 60, 0.06);
+            border: 1px solid rgba(251, 146, 60, 0.12);
+            border-radius: 60px 12px 60px 12px;
+            font-size: 13px;
+            color: #fb923c;
+            font-family: 'Manrope', sans-serif;
+            backdrop-filter: blur(4px);
+        }
+        .shield-badge-hero .shield-icon {
+            font-size: 18px;
+            animation: pulse-shield 2.5s ease-in-out infinite;
+        }
+        .hero-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .orbit-container {
+            position: relative;
+            width: 340px;
+            height: 340px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .orbit-ring {
+            position: absolute;
+            border-radius: 60% 40% 50% 50% / 40% 60% 50% 50%;
+            border: 1px solid rgba(251, 146, 60, 0.1);
+            animation: spin-odd 22s linear infinite;
+        }
+        .orbit-ring:nth-child(1) {
+            width: 100%;
+            height: 100%;
+            border-color: rgba(251, 146, 60, 0.06);
+            animation-duration: 28s;
+        }
+        .orbit-ring:nth-child(2) {
+            width: 74%;
+            height: 74%;
+            border-color: rgba(168, 85, 247, 0.08);
+            animation-duration: 16s;
+            animation-direction: reverse;
+            border-width: 2px;
+        }
+        .orbit-ring:nth-child(3) {
+            width: 48%;
+            height: 48%;
+            border-color: rgba(251, 146, 60, 0.12);
+            animation-duration: 12s;
+            border-style: dashed;
+        }
+        @keyframes spin-odd {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .whale-icon {
+            position: relative;
+            z-index: 2;
+            width: 150px;
+            height: 150px;
+            border-radius: 70% 30% 60% 40% / 30% 60% 40% 70%;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 60px rgba(251, 146, 60, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            animation: float-crazy 7s ease-in-out infinite alternate;
+        }
+        @keyframes float-crazy {
+            0% {
+                transform: translateY(0) rotate(-2deg) scale(1);
+            }
+            100% {
+                transform: translateY(-18px) rotate(3deg) scale(1.05);
+            }
+        }
+        .whale-icon svg {
+            width: 100px;
+            height: 100px;
+            filter: drop-shadow(0 0 30px rgba(251, 146, 60, 0.2));
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .whale-icon:hover svg {
+            transform: rotate(-8deg) scale(1.08);
+        }
+        .float-dots {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(251, 146, 60, 0.15);
+            animation: float-jitter 6s ease-in-out infinite alternate;
+        }
+        .float-dots:nth-child(4) {
+            width: 12px;
+            height: 12px;
+            top: 4%;
+            right: 0%;
+            background: rgba(168, 85, 247, 0.15);
+            animation-delay: 0.4s;
+            border-radius: 40% 60% 30% 70% / 50% 40% 60% 50%;
+        }
+        .float-dots:nth-child(5) {
+            width: 16px;
+            height: 16px;
+            bottom: 2%;
+            left: -4%;
+            background: rgba(251, 146, 60, 0.1);
+            animation-delay: 1.8s;
+            animation-duration: 8s;
+            border-radius: 60% 40% 50% 50% / 40% 60% 50% 50%;
+        }
+        .float-dots:nth-child(6) {
+            width: 8px;
+            height: 8px;
+            top: 22%;
+            left: -6%;
+            background: rgba(251, 146, 60, 0.2);
+            animation-delay: 2.6s;
+            animation-duration: 5s;
+            border-radius: 30% 70% 40% 60% / 60% 30% 70% 40%;
+        }
+        @keyframes float-jitter {
+            0% {
+                transform: translateY(0) scale(1);
+            }
+            33% {
+                transform: translateY(-12px) scale(0.8) rotate(10deg);
+            }
+            100% {
+                transform: translateY(-28px) scale(1.2) rotate(-5deg);
+            }
+        }
+        section {
+            padding: 80px 0;
+            position: relative;
+            z-index: 1;
+        }
+        .section-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #fb923c;
+            font-family: 'Manrope', sans-serif;
+        }
+        .section-label::before {
+            content: '◆';
+            font-size: 10px;
+            color: #a855f7;
+        }
+        .section-title {
+            font-size: clamp(32px, 5vw, 44px);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            margin-bottom: 12px;
+            font-family: 'Manrope', sans-serif;
+            color: #fff;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+        }
+        .section-desc {
+            color: #ccc;
+            font-size: 17px;
+            max-width: 560px;
+            line-height: 1.6;
+        }
+        .section-header {
+            margin-bottom: 48px;
+        }
+        .section-header.centered {
+            text-align: center;
+        }
+        .section-header.centered .section-desc {
+            margin: 0 auto;
+        }
+        .section-header.centered .section-label {
+            justify-content: center;
+        }
+        .section-header.centered .section-label::before {
+            content: '◆';
+            margin-right: 4px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        .feature-card {
+            padding: 30px 24px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 28px 6px 28px 6px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .feature-card:hover {
+            border-radius: 6px 28px 6px 28px;
+            border-color: rgba(251, 146, 60, 0.15);
+            background: rgba(0, 0, 0, 0.55);
+            transform: translateY(-8px) rotate(-0.8deg);
+        }
+        .feature-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 50% 50% 30% 70% / 40% 60% 40% 60%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 18px;
+            background: linear-gradient(135deg, rgba(251, 146, 60, 0.12), rgba(168, 85, 247, 0.06));
+            border: 1px solid rgba(251, 146, 60, 0.1);
+            color: #fb923c;
+            transition: transform 0.4s;
+        }
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1) rotate(-6deg);
+        }
+        .feature-card h3 {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            font-family: 'Manrope', sans-serif;
+            color: #fff;
+        }
+        .feature-card p {
+            font-size: 14px;
+            color: #ccc;
+            line-height: 1.6;
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+        .pricing-card {
+            padding: 34px 26px 28px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 30px 6px 30px 6px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+        .pricing-card:hover {
+            border-radius: 6px 30px 6px 30px;
+            border-color: rgba(251, 146, 60, 0.12);
+            background: rgba(0, 0, 0, 0.6);
+            transform: translateY(-6px) rotate(0.5deg);
+        }
+        .pricing-card.popular {
+            border-color: rgba(245, 158, 11, 0.2);
+            background: rgba(245, 158, 11, 0.08);
+            transform: scale(1.02);
+        }
+        .pricing-card.popular::after {
+            content: 'ОПТИМАЛЬНО';
+            position: absolute;
+            top: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #fb923c, #d97706);
+            color: #0c0a14;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            padding: 4px 18px;
+            border-radius: 0 0 20px 20px;
+            font-family: 'Manrope', sans-serif;
+        }
+        .pricing-card.popular:hover {
+            transform: scale(1.02) translateY(-6px);
+        }
+        .pricing-card .name {
+            font-weight: 700;
+            font-size: 20px;
+            font-family: 'Manrope', sans-serif;
+            color: #fff;
+        }
+        .pricing-card .sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 2px;
+        }
+        .pricing-card .price {
+            font-size: 44px;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            margin: 16px 0 2px;
+            color: #fff;
+        }
+        .pricing-card .price small {
+            font-size: 18px;
+            font-weight: 500;
+            color: #bbb;
+        }
+        .pricing-card .period {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 18px;
+        }
+        .pricing-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 22px;
+            text-align: left;
+            display: inline-block;
+        }
+        .pricing-card ul li {
+            font-size: 14px;
+            color: #ccc;
+            padding: 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .pricing-card ul li::before {
+            content: '⏺';
+            color: #fb923c;
+            font-size: 12px;
+        }
+        .pricing-card .btn {
+            width: 100%;
+        }
+        .promo-block {
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 30px 8px 30px 8px;
+            padding: 24px 28px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            max-width: 640px;
+            margin: 0 auto 30px;
+            transition: border-color 0.3s;
+        }
+        .promo-block:hover {
+            border-color: rgba(251, 146, 60, 0.15);
+        }
+        .promo-block .promo-label {
+            font-family: 'Manrope', sans-serif;
+            font-size: 15px;
+            color: #ccc;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .promo-block .promo-label .icon {
+            font-size: 20px;
+        }
+        .promo-block input {
+            flex: 1;
+            min-width: 160px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 40px 8px 40px 8px;
+            padding: 10px 18px;
+            color: #edeaf5;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            transition: border 0.25s;
+            outline: none;
+        }
+        .promo-block input:focus {
+            border-color: #fb923c;
+            box-shadow: 0 0 0 4px rgba(251, 146, 60, 0.08);
+        }
+        .promo-block input::placeholder {
+            color: #888;
+            font-family: 'Manrope', sans-serif;
+        }
+        .promo-block .promo-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .promo-block .promo-status {
+            width: 100%;
+            text-align: center;
+            font-size: 14px;
+            margin-top: 6px;
+            padding: 6px 12px;
+            border-radius: 40px 8px 40px 8px;
+            font-family: 'Manrope', sans-serif;
+        }
+        .promo-status.success {
+            background: rgba(16, 185, 129, 0.08);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.12);
+        }
+        .promo-status.error {
+            background: rgba(239, 68, 68, 0.08);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.12);
+        }
+        .promo-status.info {
+            background: rgba(251, 146, 60, 0.06);
+            color: #fb923c;
+            border: 1px solid rgba(251, 146, 60, 0.08);
+        }
+        .promo-status .clear-promo {
+            background: none;
+            border: none;
+            color: #fb923c;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 13px;
+            margin-left: 8px;
+        }
+        .promo-status .clear-promo:hover {
+            color: #fbbf8a;
+        }
+        #account {
+            display: none;
+        }
+        .cabinet-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .cabinet-grid .wide {
+            grid-column: 1 / -1;
+        }
+        .cab-panel {
+            padding: 28px 26px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 28px 8px 28px 8px;
+            transition: border-color 0.3s;
+        }
+        .cab-panel:hover {
+            border-color: rgba(251, 146, 60, 0.1);
+        }
+        .cab-panel h3 {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            font-family: 'Manrope', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+        }
+        .cab-panel .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin: 14px 0;
+        }
+        .cab-panel .field label {
+            font-size: 13px;
+            color: #bbb;
+            font-weight: 500;
+        }
+        .cab-panel .field input,
+        .cab-panel .field select {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #edeaf5;
+            border-radius: 14px 4px 14px 4px;
+            padding: 12px 16px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px;
+            transition: border 0.25s;
+        }
+        .cab-panel .field input:focus,
+        .cab-panel .field select:focus {
+            border-color: #fb923c;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(251, 146, 60, 0.08);
+        }
+        .cab-panel .field input::placeholder {
+            color: #666;
+        }
+        .status-box {
+            padding: 12px 16px;
+            border-radius: 14px 4px 14px 4px;
+            background: rgba(251, 146, 60, 0.04);
+            border: 1px solid rgba(251, 146, 60, 0.08);
+            color: #fbbf8a;
+            font-size: 14px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .uid-chip {
+            display: inline-block;
+            padding: 2px 14px;
+            border-radius: 40px 10px 40px 10px;
+            background: rgba(251, 146, 60, 0.08);
+            border: 1px solid rgba(251, 146, 60, 0.1);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: #fb923c;
+        }
+        .profile-line {
+            color: #bbb;
+            font-size: 14px;
+            padding: 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .profile-line b {
+            color: #edeaf5;
+            font-weight: 600;
+        }
+        .mt-12 {
+            margin-top: 12px;
+        }
+        .mt-8 {
+            margin-top: 8px;
+        }
+        .mb-8 {
+            margin-bottom: 8px;
+        }
+        .admin {
+            display: none;
+        }
+        .admin .cab-panel {
+            border-color: rgba(251, 146, 60, 0.08);
+        }
+        .keys-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+        .keys-table th,
+        .keys-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            text-align: left;
+        }
+        .keys-table th {
+            color: #aaa;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .key-code {
+            font-family: 'JetBrains Mono', monospace;
+            color: #fb923c;
+            font-size: 12px;
+        }
+        .admin .btn-sm {
+            padding: 6px 16px;
+            font-size: 12px;
+            border-radius: 30px 6px 30px 6px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(24px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-box {
+            width: min(420px, 100%);
+            padding: 32px 30px 30px;
+            background: rgba(16, 13, 26, 0.92);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 40px 8px 40px 8px;
+            box-shadow: 0 60px 120px rgba(0, 0, 0, 0.5);
+        }
+        .modal-box .close {
+            float: right;
+            background: none;
+            border: none;
+            color: #6b648a;
+            font-size: 28px;
+            cursor: pointer;
+            transition: color 0.2s, transform 0.3s;
+            line-height: 1;
+        }
+        .modal-box .close:hover {
+            color: #fb923c;
+            transform: rotate(120deg);
+        }
+        .modal-box h2 {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            font-family: 'Manrope', sans-serif;
+            color: #fff;
+        }
+        .modal-tabs {
+            display: flex;
+            gap: 8px;
+            margin: 16px 0 18px;
+        }
+        .modal-tab {
+            flex: 1;
+            padding: 10px 0;
+            border-radius: 30px 6px 30px 6px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #9a93b6;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.25s;
+            font-family: 'Manrope', sans-serif;
+        }
+        .modal-tab.active {
+            background: rgba(251, 146, 60, 0.08);
+            border-color: rgba(251, 146, 60, 0.2);
+            color: #fb923c;
+        }
+        .modal-box .field {
+            margin: 14px 0;
+        }
+        .modal-box .field label {
+            font-size: 13px;
+            color: #bbb;
+            font-weight: 500;
+        }
+        .modal-box .field input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #edeaf5;
+            border-radius: 14px 4px 14px 4px;
+            padding: 12px 16px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px;
+            transition: border 0.25s;
+        }
+        .modal-box .field input:focus {
+            border-color: #fb923c;
+            outline: none;
+        }
+        .modal-box .btn {
+            width: 100%;
+            margin-top: 4px;
+        }
+        .modal-hint {
+            color: #888;
+            font-size: 13px;
+            margin-top: 14px;
+            text-align: center;
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: #555;
+            font-size: 12px;
+            margin: 16px 0;
+        }
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+        footer {
+            padding: 40px 0 28px;
+            border-top: 2px dashed rgba(251, 146, 60, 0.06);
+            color: #aaa;
+            font-size: 13px;
+        }
+        .footer-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .footer-inner a {
+            color: #fb923c;
+            transition: color 0.2s;
+        }
+        .footer-inner a:hover {
+            color: #fbbf8a;
+        }
+        .footer-shield {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #fb923c;
+            font-family: 'Manrope', sans-serif;
+            font-size: 13px;
+        }
+        @media (max-width: 900px) {
+            .hero .container {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .hero-content p {
+                margin: 0 auto 28px;
+            }
+            .hero-actions {
+                justify-content: center;
+            }
+            .hero-sub {
+                text-align: center;
+            }
+            .orbit-container {
+                width: 260px;
+                height: 260px;
+            }
+            .whale-icon {
+                width: 120px;
+                height: 120px;
+            }
+            .whale-icon svg {
+                width: 80px;
+                height: 80px;
+            }
+            .features-grid,
+            .pricing-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .cabinet-grid {
+                grid-template-columns: 1fr;
+            }
+            .cabinet-grid .wide {
+                grid-column: 1;
+            }
+            .nav-links .shield-badge {
+                display: none;
+            }
+            .promo-block {
+                flex-direction: column;
+                padding: 20px;
+            }
+            .promo-block input {
+                width: 100%;
+            }
+            .promo-block .promo-actions {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        @media (max-width: 600px) {
+            .features-grid,
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+            .pricing-card.popular {
+                transform: scale(1);
+            }
+            .pricing-card.popular:hover {
+                transform: translateY(-6px);
+            }
+            .footer-inner {
+                flex-direction: column;
+                text-align: center;
+            }
+            .hero {
+                padding: 130px 0 40px;
+            }
+            .orbit-container {
+                width: 200px;
+                height: 200px;
+            }
+            .whale-icon {
+                width: 90px;
+                height: 90px;
+            }
+            .whale-icon svg {
+                width: 60px;
+                height: 60px;
+            }
+            .modal-box {
+                padding: 24px 18px;
+            }
+        }
+        .fade-up {
+            opacity: 0;
+            transform: translateY(30px) rotate(-0.5deg);
+            transition: opacity 0.8s cubic-bezier(0.34, 1.2, 0.64, 1), transform 0.8s cubic-bezier(0.34, 1.2, 0.64, 1);
+        }
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0) rotate(0deg);
+        }
+        .fade-up.delay-1 {
+            transition-delay: 0.1s;
+        }
+        .fade-up.delay-2 {
+            transition-delay: 0.2s;
+        }
+        .fade-up.delay-3 {
+            transition-delay: 0.3s;
+        }
+        .squiggle-line {
+            width: 120px;
+            height: 6px;
+            background: repeating-linear-gradient(90deg, #fb923c33, #fb923c33 8px, transparent 8px, transparent 16px);
+            margin: 20px auto;
+            border-radius: 40% 60% 30% 70% / 50% 40% 60% 50%;
+            transform: rotate(-2deg);
+        }
+        .squiggle-line.right {
+            transform: rotate(4deg) scaleX(-1);
+        }
+        .ddos-warning {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 999;
+            background: rgba(251, 146, 60, 0.12);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(251, 146, 60, 0.2);
+            border-radius: 16px 4px 16px 4px;
+            padding: 14px 20px;
+            color: #fb923c;
+            font-size: 13px;
+            font-family: 'Manrope', sans-serif;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: 300px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        .ddos-warning.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .ddos-warning .shield-icon {
+            font-size: 24px;
+        }
+        .ddos-warning .close-warn {
+            background: none;
+            border: none;
+            color: #6b648a;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 4px;
+        }
+        .ddos-warning .close-warn:hover {
+            color: #fb923c;
+        }
+        /* ─── дополнительный стиль для текста на тёмном фоне ─── */
+        .text-light {
+            color: #edeaf5;
+        }
+        .text-muted {
+            color: #bbb;
+        }
+
+        /* ── WhaleDLC refresh: clean mobile-first layout ── */
+        body {
+            background:
+              radial-gradient(ellipse at 78% 16%, rgba(238,112,34,.17), transparent 32%),
+              radial-gradient(ellipse at 14% 52%, rgba(89,65,157,.16), transparent 34%),
+              linear-gradient(145deg,#090b18 0%,#111326 48%,#090a14 100%);
+            background-attachment: fixed;
+        }
+        body::before {
+            background:
+              linear-gradient(180deg,rgba(7,8,18,.45),rgba(7,8,18,.82)),
+              radial-gradient(ellipse at 50% 20%,rgba(255,144,48,.08),transparent 58%);
+            backdrop-filter: none;
+        }
+        .butterfly-container { display:none !important; }
+        nav {
+            padding: 10px 0;
+            background: rgba(10,11,23,.88);
+            border-bottom: 1px solid rgba(255,255,255,.08);
+            backdrop-filter: blur(22px);
+        }
+        .nav-inner { gap: 14px; min-height: 42px; }
+        .brand { white-space:nowrap; font-family:'Inter',sans-serif; font-size:19px; }
+        .brand .logo-squiggle { border-radius:11px; }
+        .nav-links { gap:22px; }
+        .nav-links a { font-family:'Inter',sans-serif; font-size:13px; }
+        .nav-actions { display:flex; gap:8px; flex-shrink:0; }
+        .nav-actions .btn { padding:9px 15px; font-size:12px; }
+        .menu-toggle {
+            display:none; border:0; background:transparent; color:#f4f1fb;
+            font-size:23px; line-height:1; padding:8px; cursor:pointer;
+        }
+        .hero { min-height:calc(100vh - 64px); padding-top:132px; }
+        .hero-content h1 { letter-spacing:-.055em; }
+        .hero-content p { color:#c9c7d4; }
+        .card-live,.feature-card,.pricing-card,.cab-panel,.promo-block {
+            background:rgba(20,22,42,.86);
+            border:1px solid rgba(255,255,255,.075);
+            box-shadow:0 18px 55px rgba(0,0,0,.16);
+            backdrop-filter:blur(16px);
+        }
+        .feature-card,.pricing-card,.cab-panel { border-radius:22px; }
+        .feature-card:hover,.pricing-card:hover,.cab-panel:hover { border-radius:22px; }
+        .pricing-card.popular { background:linear-gradient(160deg,rgba(61,42,28,.92),rgba(22,22,42,.95)); border-color:rgba(251,146,60,.38); }
+        .btn { border-radius:13px; }
+        .btn-primary { background:linear-gradient(100deg,#ff9a19,#f4770b); color:#17101a; box-shadow:0 8px 24px rgba(244,119,11,.2); }
+        .btn-primary:hover { box-shadow:0 12px 30px rgba(244,119,11,.32); }
+        .btn-success { background:linear-gradient(100deg,#18b981,#07986c); color:#061b16; }
+        .btn-amber { background:linear-gradient(100deg,#f6a623,#dc790e); }
+        .section-title { font-family:'Inter',sans-serif; letter-spacing:-.035em; }
+        .section-label { font-family:'Inter',sans-serif; }
+        .feature-card h3,.pricing-card .name,.cab-panel h3 { font-family:'Inter',sans-serif; }
+        .promo-block { border-radius:20px; }
+        .promo-block input,.cab-panel .field input,.cab-panel .field select,.modal-box .field input { border-radius:12px; }
+        .modal-box { border-radius:22px; background:rgba(17,18,34,.98); }
+        .support-action { margin-top:18px; display:inline-flex; justify-content:center; }
+        .support-grid { max-width:900px; margin:0 auto; }
+        #account,#admin,#support { scroll-margin-top:88px; }
+        .keys-table { display:block; overflow-x:auto; white-space:nowrap; }
+        button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible {
+            outline:2px solid #ff9a19; outline-offset:3px;
+        }
+        @media(max-width:900px) {
+            .nav-inner { flex-wrap:nowrap; }
+            .menu-toggle { display:block; order:2; margin-left:auto; }
+            .nav-links {
+                display:none; position:absolute; top:calc(100% + 1px); left:12px; right:12px;
+                padding:14px; border:1px solid rgba(255,255,255,.1); border-radius:16px;
+                background:rgba(13,14,29,.98); box-shadow:0 20px 50px rgba(0,0,0,.4);
+                flex-direction:column; align-items:stretch; gap:0;
+            }
+            .nav-links.open { display:flex; }
+            .nav-links a { padding:12px 10px; border-bottom:1px solid rgba(255,255,255,.06); }
+            .nav-links a:last-child { border-bottom:0; }
+            .nav-links .shield-badge { display:none; }
+            .nav-actions { order:3; }
+            .nav-actions .btn { padding:8px 11px; }
+            .brand { font-size:16px; gap:7px; }
+            .brand .logo-squiggle { width:29px;height:29px;line-height:29px;font-size:15px; }
+            .brand .shield-badge,.brand .dot-jitter { display:none; }
+        }
+        @media(max-width:600px) {
+            .container { padding-left:18px; padding-right:18px; }
+            .hero { padding:118px 0 35px; min-height:auto; }
+            .hero-content h1 { font-size:clamp(48px,15vw,72px); }
+            .hero-content p { font-size:15px; }
+            .orbit-container { margin:8px auto 0; }
+            section { padding:62px 0; }
+            .section-header { margin-bottom:30px; }
+            .section-desc { font-size:14px; }
+            .pricing-grid,.features-grid { gap:14px; }
+            .pricing-card { padding:27px 20px 22px; }
+            .pricing-card .price { font-size:38px; }
+            .cab-panel { padding:21px 17px; }
+            .nav-actions .btn { font-size:11px; padding:8px 9px; }
+            .menu-toggle { font-size:21px; padding:6px; }
+            .brand { font-size:14px; }
+            .brand .logo-squiggle { width:26px;height:26px;line-height:26px; }
+            .support-grid { grid-template-columns:1fr; }
+        }
+        @media(prefers-reduced-motion:reduce) {
+            *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; }
+        }
+
+
+        /* Interactive project preview — vanilla JS adaptation */
+        #showcase { padding: 105px 0; overflow: hidden; }
+        .showcase-wrap { position:relative; background:#151218; border:1px solid rgba(255,255,255,.09); border-radius:24px; overflow:hidden; padding:clamp(22px,5vw,54px); }
+        .showcase-kicker { color:#fb923c; font-size:11px; letter-spacing:.22em; text-transform:uppercase; font-weight:800; margin-bottom:12px; }
+        .showcase-title { font-size:clamp(30px,5vw,54px); line-height:1.02; margin:0 0 14px; letter-spacing:-.045em; }
+        .showcase-lead { color:#a7a0ad; max-width:570px; line-height:1.7; margin:0 0 35px; }
+        .interactive-list { position:relative; border-top:1px solid rgba(255,255,255,.15); }
+        .interactive-row { position:relative; z-index:1; display:grid; grid-template-columns:minmax(120px,.75fr) minmax(130px,1fr) minmax(180px,1.4fr); gap:18px; align-items:center; min-height:91px; padding:18px 20px; border-bottom:1px solid rgba(255,255,255,.13); color:#f6f2f7; text-decoration:none; transition:color .25s ease; cursor:default; }
+        .interactive-row::before { content:""; position:absolute; inset:0; background:#fb923c; transform:scaleY(0); transform-origin:bottom; transition:transform .35s cubic-bezier(.2,.8,.2,1); z-index:-1; }
+        .interactive-row.is-active::before { transform:scaleY(1); }
+        .interactive-row.is-active { color:#171117; }
+        .interactive-client { font-size:clamp(15px,2vw,20px); font-weight:900; letter-spacing:.035em; }
+        .interactive-platform { font-size:10px; font-weight:800; letter-spacing:.18em; color:#fb923c; }
+        .interactive-row.is-active .interactive-platform { color:#24170f; }
+        .interactive-services { font-size:13px; color:#aaa2ad; line-height:1.5; }
+        .interactive-row.is-active .interactive-services { color:#34251a; }
+        .interactive-preview { position:absolute; z-index:4; width:clamp(180px,24vw,290px); aspect-ratio:4/5; right:8%; top:50%; transform:translateY(-50%) rotate(3deg) scale(.92); border-radius:15px; overflow:hidden; opacity:0; visibility:hidden; pointer-events:none; box-shadow:0 24px 70px #0009; transition:opacity .25s ease,transform .35s ease,visibility .25s; }
+        .interactive-preview.visible { opacity:1; visibility:visible; transform:translateY(-50%) rotate(0) scale(1); }
+        .interactive-preview img { width:100%;height:100%;object-fit:cover;display:block; }
+        .interactive-preview::after { content:"WHALE DLC"; position:absolute; left:15px; bottom:14px; color:white; font-weight:900; letter-spacing:.15em; font-size:12px; text-shadow:0 2px 12px #000; }
+        @media (max-width:700px) {
+          #showcase { padding:65px 0; }
+          .showcase-wrap { padding:24px 17px; }
+          .interactive-row { grid-template-columns:1fr auto; gap:7px 12px; min-height:84px; padding:16px 10px; }
+          .interactive-client { grid-column:1; }
+          .interactive-platform { grid-column:2; grid-row:1; text-align:right; }
+          .interactive-services { grid-column:1 / -1; }
+          .interactive-preview { display:none; }
+        }
+        @media (prefers-reduced-motion: reduce) { .interactive-row::before,.interactive-preview { transition:none!important; } }
+
+    </style>
+</head>
+<body>
+<div class="butterfly" style="--y:0.6;"></div>
+        <div class="butterfly" style="--y:0.4;"></div>
+        <div class="butterfly" style="--y:0.8;"></div>
+        <div class="butterfly" style="--y:0.3;"></div>
+    </div>
+
+    <!-- ─── NAV ─── -->
+    <nav>
+        <div class="container nav-inner">
+            <a class="brand" href="#">
+                <span class="logo-squiggle">W</span>
+                WHALE<span>DLC</span>
+                <span class="dot-jitter"></span>
+                <span class="shield-badge"><span class="shield-icon">🛡️</span> Anti‑DDoS</span>
+            </a>
+            <button class="menu-toggle" id="menuToggle" type="button" aria-label="Открыть меню" aria-expanded="false" onclick="toggleMenu()">☰</button>
+            <div class="nav-links" id="mainNavLinks">
+                <a href="#features" onclick="closeMenu()">Возможности</a>
+                <a href="#prices" onclick="closeMenu()">Тарифы</a>
+                <a href="#account" onclick="closeMenu();goCabinet();return false">Кабинет</a>
+                <a href="#support" onclick="closeMenu()">Поддержка</a>
+                <span class="shield-badge" style="margin-left:0;"><span class="shield-icon">🛡️</span> Anti‑DDoS</span>
+            </div>
+            <div class="nav-actions">
+                <button class="btn btn-ghost" id="btnLogin" onclick="openAuth(false)">Войти</button>
+                <button class="btn btn-primary" id="btnCabinet" onclick="goCabinet()">Кабинет</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ─── HERO ─── -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content fade-up visible">
+                <div class="badge"><span class="live"></span> MINECRAFT CLIENT · SONAR ENGINE</div>
+                <h1>WHALE<br /><span class="highlight">DLC</span></h1>
+                <p>Премиальный Minecraft-клиент с неровным характером, удобным кабинетом и системой лицензий.</p>
+                <div class="hero-actions">
+                    <a class="btn btn-primary" href="#prices">Купить доступ</a>
+                    <a class="btn btn-outline-light" href="#features">Возможности</a>
+                </div>
+                <div class="hero-sub">Windows · Лицензия привязывается к одному устройству</div>
+                <div class="shield-badge-hero"><span class="shield-icon">🛡️</span> Активная защита от DDoS-атак</div>
+                <div class="squiggle-line"></div>
+            </div>
+            <div class="hero-visual fade-up delay-2">
+                <div class="orbit-container">
+                    <div class="orbit-ring"></div>
+                    <div class="orbit-ring"></div>
+                    <div class="orbit-ring"></div>
+                    <div class="float-dots"></div>
+                    <div class="float-dots"></div>
+                    <div class="float-dots"></div>
+                    <div class="whale-icon">
+                        <svg viewBox="0 0 400 170" xmlns="http://www.w3.org/2000/svg">
+                            <defs><linearGradient id="whaleGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fb923c"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs>
+                            <path d="M42,118 C36,78 92,46 168,44 C238,42 300,52 336,72 C356,84 372,80 392,58 C384,90 362,106 344,108 C356,122 376,120 390,106 C376,132 348,134 332,120 C298,142 232,152 164,148 C104,145 60,140 42,130 C20,150 -2,150 4,138 C14,132 24,126 30,120 C16,116 4,110 -2,96 C14,106 28,112 42,118 Z"/>
+                            <circle cx="118" cy="88" r="5" fill="#0c0a14" opacity="0.3"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── FEATURES ─── -->
+    <section id="features">
+        <div class="container">
+            <div class="section-header centered fade-up">
+                <div class="section-label">Сонар-обзор</div>
+                <h2 class="section-title">Возможности</h2>
+                <p class="section-desc">Минималистичный интерфейс и контроль лицензии.</p>
+                <div class="squiggle-line"></div>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card fade-up delay-1"><div class="feature-icon">◈</div><h3>Modern GUI</h3><p>Красивый интерфейс с категориями и удобными настройками.</p></div>
+                <div class="feature-card fade-up delay-2"><div class="feature-icon">⚡</div><h3>Performance</h3><p>Лёгкий клиентский интерфейс, рассчитанный на комфортную игру.</p></div>
+                <div class="feature-card fade-up delay-3"><div class="feature-icon">⌁</div><h3>License System</h3><p>Ключи на 7 дней, 30 дней или навсегда с привязкой к устройству.</p></div>
+                <div class="feature-card fade-up delay-1"><div class="feature-icon">♙</div><h3>Personal Cabinet</h3><p>Аккаунт, статус лицензии и идентификатор устройства.</p></div>
+                <div class="feature-card fade-up delay-2"><div class="feature-icon">🔒</div><h3>Device Lock</h3><p>Лицензия может использоваться только на одном зарегистрированном устройстве.</p></div>
+                <div class="feature-card fade-up delay-3"><div class="feature-icon">✦</div><h3>Updates</h3><p>Место для новостей, обновлений и информации о новых версиях.</p></div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ─── INTERACTIVE PREVIEW ─── -->
+    <section id="showcase">
+      <div class="container">
+        <div class="showcase-wrap fade-up">
+          <div class="showcase-kicker">WHALE DLC · INSIDE THE CLIENT</div>
+          <h2 class="showcase-title">Всё важное.<br><span class="highlight">В одном месте.</span></h2>
+          <p class="showcase-lead">Наведи на пункт, чтобы посмотреть детали. На телефоне нажми на интересующий раздел.</p>
+          <div class="interactive-list" id="interactiveList">
+            <div class="interactive-row is-active" tabindex="0" data-preview="https://images.unsplash.com/photo-1614294149010-950b698f72c0?auto=format&fit=crop&w=900&q=85">
+              <span class="interactive-client">CLIENT CORE</span><span class="interactive-platform">ENGINE</span><span class="interactive-services">Основные функции клиента и удобная структура настроек</span>
+            </div>
+            <div class="interactive-row" tabindex="0" data-preview="https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?auto=format&fit=crop&w=900&q=85">
+              <span class="interactive-client">VISUAL SYSTEM</span><span class="interactive-platform">INTERFACE</span><span class="interactive-services">Чистый интерфейс, категории и быстрый доступ к функциям</span>
+            </div>
+            <div class="interactive-row" tabindex="0" data-preview="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=900&q=85">
+              <span class="interactive-client">LICENSE GUARD</span><span class="interactive-platform">SECURITY</span><span class="interactive-services">Активация ключей и привязка лицензии к устройству</span>
+            </div>
+            <div class="interactive-row" tabindex="0" data-preview="https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=900&q=85">
+              <span class="interactive-client">ACCOUNT HUB</span><span class="interactive-platform">PROFILE</span><span class="interactive-services">Личный кабинет, статус доступа и управление аккаунтом</span>
+            </div>
+          </div>
+          <div class="interactive-preview visible" id="interactivePreview" aria-hidden="true"><img id="interactivePreviewImg" src="https://images.unsplash.com/photo-1614294149010-950b698f72c0?auto=format&fit=crop&w=900&q=85" alt="Предпросмотр WHALE DLC"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── PRICING + PROMO ─── -->
+    <section id="prices">
+        <div class="container">
+            <div class="section-header centered fade-up">
+                <div class="section-label">Глубина доступа</div>
+                <h2 class="section-title">Выбери доступ</h2>
+                <p class="section-desc">После оплаты свяжись с продавцом для получения ключа.</p>
+                <div class="squiggle-line right"></div>
+            </div>
+
+            <div class="promo-block fade-up delay-1">
+                <div class="promo-label"><span class="icon">🎫</span> Промокод</div>
+                <input type="text" id="promoInput" placeholder="Введи код (например, SUMMER20)" />
+                <div class="promo-actions">
+                    <button class="btn btn-success" id="applyPromoBtn" onclick="applyPromo()">Применить</button>
+                    <button class="btn btn-ghost" id="clearPromoBtn" onclick="clearPromo()" style="display:none;">Отменить</button>
+                </div>
+                <div id="promoStatus" class="promo-status" style="display:none;"></div>
+            </div>
+
+            <div class="pricing-grid">
+                <div class="pricing-card fade-up delay-2" data-plan="7">
+                    <div class="name">7 ДНЕЙ</div>
+                    <div class="sub mono">⌁ −7 М</div>
+                    <div class="price" data-base="79">79 <small>₽</small></div>
+                    <div class="period">разовая покупка</div>
+                    <ul><li>Полный доступ</li><li>1 устройство</li><li>7 дней</li></ul>
+                    <button class="btn btn-primary" onclick="buy('7 дней')">Купить</button>
+                </div>
+                <div class="pricing-card popular fade-up delay-3" data-plan="30">
+                    <div class="name">30 ДНЕЙ</div>
+                    <div class="sub mono">⌁ −30 М</div>
+                    <div class="price" data-base="149">149 <small>₽</small></div>
+                    <div class="period">разовая покупка</div>
+                    <ul><li>Полный доступ</li><li>1 устройство</li><li>30 дней</li></ul>
+                    <button class="btn btn-amber" onclick="buy('30 дней')">Купить</button>
+                </div>
+                <div class="pricing-card fade-up delay-1" data-plan="forever">
+                    <div class="name">НАВСЕГДА</div>
+                    <div class="sub mono">⌁ БЕЗ ДНА</div>
+                    <div class="price" data-base="449">449 <small>₽</small></div>
+                    <div class="period">без срока</div>
+                    <ul><li>Полный доступ</li><li>1 устройство</li><li>Навсегда</li></ul>
+                    <button class="btn btn-primary" onclick="buy('Навсегда')">Купить</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── CABINET ─── -->
+    <section id="account">
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="section-label">Личный кабинет</div>
+                <h2 class="section-title">Управление аккаунтом</h2>
+                <p class="section-desc">Информация о профиле, лицензии и устройстве.</p>
+                <div class="squiggle-line"></div>
+            </div>
+            <div class="cabinet-grid">
+                <div class="cab-panel fade-up delay-1">
+                    <h3>Профиль</h3>
+                    <div id="profile"></div>
+                    <button class="btn btn-ghost mt-8" onclick="logout()">Выйти</button>
+                </div>
+                <div class="cab-panel fade-up delay-2">
+                    <h3>Устройство</h3>
+                    <p style="color:#aaa;font-size:13px;margin-bottom:12px;">HWID привязывается при запуске Minecraft через лаунчер. До запуска игры статус остаётся «Не привязан».</p>
+                    <div class="status-box" id="device"></div>
+                    <div style="margin-top:14px;">
+                        <button class="btn btn-amber" style="width:100%;" onclick="requestHwidReset()">Сбросить HWID — 100 ₽</button>
+                        <p style="color:#888;font-size:12px;margin-top:8px;">Сброс оплачивается отдельно. После оплаты запрос обрабатывается администратором.</p>
+                    </div>
+                </div>
+                <div class="cab-panel wide fade-up delay-3">
+                    <h3>Активировать ключ</h3>
+                    <p style="color:#aaa;font-size:13px;margin-top:-4px;">Введи ключ, полученный после оплаты — лицензия сразу привяжется к твоему аккаунту.</p>
+                    <div class="field"><label>Ключ лицензии</label><input id="keyInput" class="mono" placeholder="WHALE-XXXXXXXX-XXXXXXXX" /></div>
+                    <button class="btn btn-primary" style="width:100%;max-width:280px;" onclick="activateKey()">Активировать</button>
+                    <div id="activateMsg" style="margin-top:12px;"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── ADMIN ─── -->
+    <section class="admin" id="admin">
+        <div class="container">
+            <div class="section-header fade-up">
+                <div class="section-label">Администрирование</div>
+                <h2 class="section-title">Панель управления</h2>
+                <p class="section-desc">Управление лицензиями, пользователями, HWID и промокодами.</p>
+                <div class="squiggle-line right"></div>
+            </div>
+            <div class="cab-panel fade-up" style="border-color:rgba(251,146,60,0.08);">
+                <h3>Создать ключ</h3>
+                <div class="field"><label>Срок</label><select id="keyDuration"><option value="7">7 дней</option><option value="30">30 дней</option><option value="forever">Навсегда</option></select></div>
+                <button class="btn btn-primary" onclick="createKey()">Создать ключ</button>
+                <div id="newKey" style="margin-top:14px;"></div>
+
+                <h3 style="margin-top:28px;">Ключи</h3>
+                <table class="keys-table"><thead><tr><th>Ключ</th><th>Срок</th><th>Статус</th></tr></thead><tbody id="keyTable"></tbody></table>
+
+                <h3 style="margin-top:28px;">Пользователи и HWID</h3>
+                <p style="color:#aaa;font-size:13px;margin-top:-4px;">Сброс HWID доступен только администраторам. После сброса пользователь сможет привязать новое устройство при следующем запуске лаунчера.</p>
+                <div class="field"><label>Поиск по UID или email</label><input id="userSearch" oninput="renderUsers()" placeholder="12 или user@example.com" /></div>
+                <table class="keys-table"><thead><tr><th>UID</th><th>Email</th><th>Лицензия</th><th>HWID</th><th>Действие</th></tr></thead><tbody id="userTable"></tbody></table>
+
+                <h3 style="margin-top:28px;">Админы</h3>
+                <p style="color:#aaa;font-size:13px;margin-top:-4px;">Email или логин из списка ниже автоматически получает права админа при входе на сайт.</p>
+                <div class="field"><label>Email или логин нового админа</label><input id="newAdminInput" placeholder="user@example.com" /></div>
+                <button class="btn btn-amber" onclick="addAdmin()">Сделать админом</button>
+                <div id="adminList" style="margin-top:14px;"></div>
+
+                <h3 style="margin-top:28px;">Создать промокод</h3>
+                <div class="field"><label>Код</label><input id="newPromoCode" placeholder="SUMMER20" /></div>
+                <div class="field"><label>Скидка (%)</label><input id="newPromoDiscount" type="number" placeholder="20" /></div>
+                <div class="field"><label>Лимит использований (оставьте пустым для безлимита)</label><input id="newPromoLimit" type="number" placeholder="100" /></div>
+                <div class="field"><label>Дата истечения (оставьте пустым для бессрочного)</label><input id="newPromoExpires" type="datetime-local" /></div>
+                <button class="btn btn-success" onclick="createPromo()">Создать промокод</button>
+                <div id="promoCreateResult" style="margin-top:12px;"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="support">
+        <div class="container">
+            <div class="section-header centered fade-up">
+                <div class="section-label">Поддержка</div>
+                <h2 class="section-title">Связь с нами</h2>
+                <p class="section-desc">Поможем с доступом, аккаунтом и техническими вопросами.</p>
+            </div>
+            <div class="features-grid support-grid">
+                <div class="feature-card fade-up">
+                    <div class="feature-icon">✈</div>
+                    <h3>Telegram</h3>
+                    <p>Оперативная поддержка в Telegram-чате.</p>
+                    <a class="btn btn-primary support-action" href="https://t.me/zgsfud" target="_blank" rel="noopener noreferrer">Написать в Telegram</a>
+                </div>
+                <div class="feature-card fade-up">
+                    <div class="feature-icon">✉</div>
+                    <h3>Email</h3>
+                    <p>Для официальных запросов и обратной связи.</p>
+                    <a class="btn btn-ghost support-action" href="mailto:support@whaledlc.com">Написать на почту</a>
+                </div>
+                <div class="feature-card fade-up">
+                    <div class="feature-icon">?</div>
+                    <h3>Частые вопросы</h3>
+                    <p>Проверь настройки аккаунта и статус лицензии в личном кабинете.</p>
+                    <a class="btn btn-outline-light support-action" href="#account" onclick="goCabinet();return false;">Открыть кабинет</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─── FOOTER ─── -->
+    <footer>
+        <div class="container footer-inner">
+            <div>© 2026 WhaleDLC · <a href="https://t.me/zgsfud" target="_blank" rel="noopener noreferrer">Поддержка в Telegram</a></div>
+            <div class="footer-shield"><span style="font-size:18px;">🛡️</span> Анти‑DDoS защита активна</div>
+            <div style="color:#666;">Не является официальным продуктом Mojang.</div>
+        </div>
+    </footer>
+
+    <!-- ─── MODAL ─── -->
+    <div class="modal" id="auth">
+        <div class="modal-box">
+            <button class="close" onclick="closeAuth()">×</button>
+            <h2 id="authTitle">Вход</h2>
+            <div class="modal-tabs"><button type="button" id="tabLogin" class="modal-tab active" onclick="setAuthMode('login')">Вход</button><button type="button" id="tabSignup" class="modal-tab" onclick="setAuthMode('signup')">Регистрация</button></div>
+            <div class="field"><label>Email</label><input id="login" type="email" placeholder="you@example.com" /></div>
+            <div class="field"><label>Пароль</label><input id="pass" type="password" placeholder="Пароль (мин. 6 символов)" /></div>
+            <button class="btn btn-primary" id="authSubmit" onclick="authAction()">Войти</button>
+            <p class="modal-hint" id="authHint">Нет аккаунта? Переключись на «Регистрация».</p>
+            <div class="divider">или</div>
+            <button class="btn btn-ghost" style="width:100%;" onclick="signInGoogle()">Продолжить с Google</button>
+        </div>
+    </div>
+
+    <!-- ─── DDoS warning ─── -->
+    <div class="ddos-warning" id="ddosWarning">
+        <span class="shield-icon">🛡️</span>
+        <span>Обнаружена подозрительная активность. Запросы ограничены.</span>
+        <button class="close-warn" onclick="document.getElementById('ddosWarning').classList.remove('active')">✕</button>
+    </div>
+
+    <!-- ─── JAVASCRIPT ─── -->
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('mainNavLinks');
+            const button = document.getElementById('menuToggle');
+            if (!menu || !button) return;
+            const opened = menu.classList.toggle('open');
+            button.setAttribute('aria-expanded', String(opened));
+            button.textContent = opened ? '×' : '☰';
+        }
+        function closeMenu() {
+            const menu = document.getElementById('mainNavLinks');
+            const button = document.getElementById('menuToggle');
+            if (menu) menu.classList.remove('open');
+            if (button) { button.setAttribute('aria-expanded','false'); button.textContent='☰'; }
+        }
+        document.addEventListener('click', (event) => {
+            const menu = document.getElementById('mainNavLinks');
+            const button = document.getElementById('menuToggle');
+            if (menu && button && !menu.contains(event.target) && !button.contains(event.target)) closeMenu();
+        });
+
+        // ── Supabase ──
+        const SUPABASE_URL = 'https://kxcacqbkoxmqtbdjwyxv.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_7PzYPgZmEJ8fRlsw2C5Llg_cOrNbGZC';
+        const sb = (SUPABASE_URL.indexOf('YOUR-PROJECT') === -1 && window.supabase) ?
+            window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) :
+            null;
+
+        const TG = 'https://t.me/fucksidorov';
+        let wantCabinet = false;
+        let authMode = 'login';
+        let isLogged = false;
+        let currentProfile = null;
+        let allUsers = [];
+        let activePromo = null;
+
+        // ── Rate limiter ──
+        const _cooldowns = {};
+        const _formOpenedAt = {};
+        const pageLoadTime = Date.now();
+
+        function rateLimited(key, ms) {
+            const now = Date.now();
+            if (now - pageLoadTime < 300 && key !== 'pageLoad') {
+                document.getElementById('ddosWarning').classList.add('active');
+                return true;
+            }
+            if (_cooldowns[key] && now - _cooldowns[key] < ms) {
+                document.getElementById('ddosWarning').classList.add('active');
+                return true;
+            }
+            _cooldowns[key] = now;
+            document.getElementById('ddosWarning').classList.remove('active');
+            return false;
+        }
+
+        function esc(s) {
+            if (!s) return '';
+            return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } [m]));
+        }
+
+        function notConfigured() {
+            alert('База данных ещё не подключена: нужно вписать SUPABASE_URL и SUPABASE_ANON_KEY в код сайта.');
+            return true;
+        }
+
+        function fmtUid(u) { return (u == null || u === '') ? '—' : '#' + u; }
+
+        // ── Auth UI ──
+        function setAuthMode(m) {
+            authMode = m;
+            document.getElementById('tabLogin').classList.toggle('active', m === 'login');
+            document.getElementById('tabSignup').classList.toggle('active', m === 'signup');
+            document.getElementById('authTitle').textContent = m === 'login' ? 'Вход' : 'Регистрация';
+            document.getElementById('authSubmit').textContent = m === 'login' ? 'Войти' : 'Создать аккаунт';
+            document.getElementById('authHint').textContent = m === 'login' ?
+                'Нет аккаунта? Переключись на «Регистрация».' :
+                'Уже есть аккаунт? Переключись на «Вход».';
+        }
+
+        function openAuth(c, mode) {
+            wantCabinet = c || false;
+            if (mode) setAuthMode(mode);
+            document.getElementById('auth').style.display = 'flex';
+            _formOpenedAt.auth = Date.now();
+        }
+
+        function closeAuth() { document.getElementById('auth').style.display = 'none'; }
+
+        function setAuthUI(logged) {
+            isLogged = logged;
+            const b = document.getElementById('btnLogin');
+            if (b) b.style.display = logged ? 'none' : '';
+        }
+
+        function scrollToAccount() {
+            const el = document.getElementById('account');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function goCabinet() {
+            if (isLogged) { scrollToAccount(); return; }
+            openAuth(true, 'login');
+        }
+
+        // ── Auth actions ──
+        async function authAction() {
+            if (!sb) return notConfigured();
+            if (rateLimited('auth', 2500)) return alert('Слишком много попыток подряд, подожди немного.');
+            if (_formOpenedAt.auth && Date.now() - _formOpenedAt.auth < 600) return alert('Слишком быстро — похоже на бота, попробуй ещё раз.');
+            const email = document.getElementById('login').value.trim();
+            const p = document.getElementById('pass').value;
+            if (!email || !p) return alert('Заполни email и пароль.');
+            if (authMode === 'signup') {
+                if (p.length < 6) return alert('Пароль должен быть минимум 6 символов.');
+                const { data, error } = await sb.auth.signUp({ email, password: p, options: { emailRedirectTo: window.location
+                        .origin } });
+                if (error) {
+                    const m = (error.message || '').toLowerCase();
+                    if (m.indexOf('already') !== -1) { setAuthMode('login');
+                        return alert('Такой аккаунт уже есть — войди по этому email.'); }
+                    return alert('Ошибка регистрации: ' + error.message);
+                }
+                if (!data.session) { closeAuth();
+                    return alert('Аккаунт создан! Подтверди почту по ссылке из письма, затем войди.'); }
+                closeAuth();
+                await showAccount(true);
+                return;
+            }
+            const { error: signInErr } = await sb.auth.signInWithPassword({ email, password: p });
+            if (signInErr) {
+                const msg = (signInErr.message || '').toLowerCase();
+                if (msg.indexOf('invalid login credentials') !== -1) { setAuthMode('signup');
+                    return alert('Неверный email или пароль. Если аккаунта нет — нажми «Регистрация».'); }
+                return alert('Ошибка входа: ' + signInErr.message);
+            }
+            closeAuth();
+            await showAccount(true);
+        }
+
+        async function signInGoogle() {
+            if (!sb) return notConfigured();
+            if (rateLimited('google', 3000)) return alert('Подождите перед повторной попыткой.');
+            await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+        }
+
+        async function logout() {
+            if (sb) await sb.auth.signOut();
+            location.reload();
+        }
+
+        // ── Промокоды ──
+        async function applyPromo() {
+            if (!sb) {
+                showPromoStatus('error', 'Проверка промокодов временно недоступна: база данных не подключена.');
+                return;
+            }
+            const input = document.getElementById('promoInput');
+            const code = input.value.trim().toUpperCase();
+            const statusEl = document.getElementById('promoStatus');
+            const applyBtn = document.getElementById('applyPromoBtn');
+            const clearBtn = document.getElementById('clearPromoBtn');
+
+            if (!code) {
+                showPromoStatus('error', 'Введи код промокода.');
+                return;
+            }
+            if (activePromo && activePromo.code === code) {
+                showPromoStatus('info', 'Промокод уже активен.');
+                return;
+            }
+
+            applyBtn.disabled = true;
+            applyBtn.textContent = 'Проверка...';
+            statusEl.style.display = 'none';
+
+            try {
+                const { data, error } = await sb
+                    .from('promocodes')
+                    .select('code, discount, usage_limit, used_count')
+                    .eq('code', code)
+                    .eq('active', true)
+                    .or('expires_at.is.null,expires_at.gte.' + new Date().toISOString())
+                    .maybeSingle();
+
+                if (error) throw error;
+                if (!data) {
+                    showPromoStatus('error', '❌ Промокод не найден или истёк.');
+                    applyBtn.disabled = false;
+                    applyBtn.textContent = 'Применить';
+                    return;
+                }
+                if (data.usage_limit !== null && data.used_count >= data.usage_limit) {
+                    showPromoStatus('error', '❌ Лимит использований этого промокода исчерпан.');
+                    applyBtn.disabled = false;
+                    applyBtn.textContent = 'Применить';
+                    return;
+                }
+
+                activePromo = { code: data.code, discount: data.discount };
+                updatePrices(data.discount);
+
+                showPromoStatus('success',
+                    `✅ Промокод <strong>${data.code}</strong> применён! Скидка ${data.discount}%. ` +
+                    `<button class="clear-promo" onclick="clearPromo()">Отменить</button>`
+                );
+                input.disabled = true;
+                applyBtn.style.display = 'none';
+                clearBtn.style.display = 'inline-flex';
+
+                await sb
+                    .from('promocodes')
+                    .update({ used_count: data.used_count + 1 })
+                    .eq('code', data.code);
+
+            } catch (err) {
+                console.error('Ошибка при проверке промокода:', err);
+                showPromoStatus('error', '⚠️ Ошибка соединения с сервером. Попробуйте позже.');
+            } finally {
+                applyBtn.disabled = false;
+                applyBtn.textContent = 'Применить';
+            }
+        }
+
+        function showPromoStatus(type, message) {
+            const statusEl = document.getElementById('promoStatus');
+            statusEl.style.display = 'block';
+            statusEl.className = 'promo-status ' + type;
+            statusEl.innerHTML = message;
+        }
+
+        function clearPromo() {
+            activePromo = null;
+            updatePrices(0);
+            const statusEl = document.getElementById('promoStatus');
+            statusEl.style.display = 'none';
+            document.getElementById('applyPromoBtn').style.display = 'inline-flex';
+            document.getElementById('clearPromoBtn').style.display = 'none';
+            document.getElementById('promoInput').disabled = false;
+            document.getElementById('promoInput').value = '';
+            document.getElementById('applyPromoBtn').disabled = false;
+            document.getElementById('applyPromoBtn').textContent = 'Применить';
+        }
+
+        function updatePrices(discountPercent) {
+            const cards = document.querySelectorAll('.pricing-card');
+            cards.forEach(card => {
+                const baseEl = card.querySelector('.price');
+                if (!baseEl) return;
+                const basePrice = parseFloat(baseEl.dataset.base);
+                if (isNaN(basePrice)) return;
+                const discounted = basePrice * (1 - discountPercent / 100);
+                const small = baseEl.querySelector('small') ? baseEl.querySelector('small').outerHTML : '<small>₽</small>';
+                if (discountPercent > 0 && discountPercent < 100) {
+                    baseEl.innerHTML =
+                        `${discounted.toFixed(0)} <small>₽</small> <span style="font-size:14px;color:#fb923c;text-decoration:line-through;margin-left:6px;">${basePrice}₽</span>`;
+                } else if (discountPercent >= 100) {
+                    baseEl.innerHTML =
+                    `0 <small>₽</small> <span style="font-size:14px;color:#fb923c;text-decoration:line-through;margin-left:6px;">${basePrice}₽</span>`;
+                } else {
+                    baseEl.innerHTML = `${basePrice} <small>₽</small>`;
+                }
+            });
+        }
+
+        // ── Покупка ──
+        function buy(planName) {
+            if (rateLimited('buy', 3500)) return alert('Не так быстро — подожди пару секунд.');
+            let msg = 'Здравствуйте! Хочу купить WhaleDLC: ' + planName;
+            if (activePromo) {
+                const discount = activePromo.discount;
+                const planMap = { '7 дней': '7', '30 дней': '30', 'Навсегда': 'forever' };
+                const card = document.querySelector(`.pricing-card[data-plan="${planMap[planName] || ''}"]`);
+                let priceText = '';
+                if (card) {
+                    const priceEl = card.querySelector('.price');
+                    if (priceEl) priceText = priceEl.textContent.trim().replace(/\s+/g, ' ');
+                }
+                msg += `, промокод ${activePromo.code} (скидка ${discount}%), итоговая цена: ${priceText || 'со скидкой'}`;
+            }
+            window.open(TG + '?text=' + encodeURIComponent(msg), '_blank');
+        }
+
+        // ── HWID ──
+        function requestHwidReset() {
+            if (rateLimited('hwidReset', 4000)) return alert('Подожди несколько секунд.');
+            const uid = currentProfile ? fmtUid(currentProfile.uid) : 'не указан';
+            const text = 'Здравствуйте! Хочу сбросить HWID WhaleDLC за 100 ₽. UID: ' + uid;
+            window.open(TG + '?text=' + encodeURIComponent(text), '_blank');
+        }
+
+        function renderHwidStatus(profile) {
+            const box = document.getElementById('device');
+            if (!box) return;
+            const hwid = profile && profile.hwid;
+            box.textContent = hwid ? 'HWID: ' + hwid + ' • Привязан' : 'HWID: Не привязан • Запусти Minecraft через лаунчер';
+        }
+
+        // ── Admin: users ──
+        async function loadUsers() {
+            if (!sb) return;
+            if (rateLimited('loadUsers', 2000)) return;
+            const { data, error } = await sb.rpc('admin_list_users');
+            if (error) { allUsers = []; return; }
+            allUsers = data || [];
+        }
+
+        async function renderUsers() {
+            const t = document.getElementById('userTable');
+            if (!t) return;
+            if (!allUsers.length) await loadUsers();
+            const q = (document.getElementById('userSearch')?.value || '').trim().toLowerCase();
+            const rows = allUsers.filter(u =>
+                !q || String(u.uid).indexOf(q) !== -1 || (u.email || '').toLowerCase().indexOf(q) !== -1
+            );
+            t.innerHTML = rows.length ?
+                rows.map(u =>
+                    '<tr>' +
+                    '<td class="key-code">' + esc(fmtUid(u.uid)) + '</td>' +
+                    '<td>' + esc(u.email || '') + '</td>' +
+                    '<td>' + esc(u.license || 'нет') + '</td>' +
+                    '<td class="mono">' + (u.hwid ? esc(u.hwid) : '<span style="color:#888;">не привязан</span>') + '</td>' +
+                    '<td>' + (u.hwid ?
+                        '<button class="btn btn-amber btn-sm" onclick="adminResetHwid(' + u.uid + ')">Сбросить</button>' :
+                        '<span style="color:#888;">—</span>') +
+                    '</td>' +
+                    '</tr>'
+                ).join('') :
+                '<tr><td colspan="5" style="color:#888;padding:16px;">Ничего не найдено</td></tr>';
+        }
+
+        async function adminResetHwid(uid) {
+            if (!sb) return notConfigured();
+            if (rateLimited('adminReset', 3000)) return alert('Слишком часто.');
+            if (!confirm('Сбросить HWID пользователя ' + fmtUid(uid) + '?')) return;
+            const { error } = await sb.rpc('admin_reset_hwid', { target_uid: uid });
+            if (error) return alert('Ошибка: ' + (error.message || 'нет прав админа'));
+            await loadUsers();
+            renderUsers();
+            if (currentProfile && Number(currentProfile.uid) === Number(uid)) {
+                currentProfile.hwid = null;
+                renderHwidStatus(currentProfile);
+            }
+            alert('HWID сброшен.');
+        }
+
+        // ── Admin: keys ──
+        async function renderKeys() {
+            const t = document.getElementById('keyTable');
+            if (!t || !sb) return;
+            if (rateLimited('renderKeys', 1500)) return;
+            const { data, error } = await sb.from('license_keys').select('*').order('created_at', { ascending: false });
+            if (error) { t.innerHTML = ''; return; }
+            t.innerHTML = data.map(x =>
+                '<tr>' +
+                '<td class="key-code">' + esc(x.key) + '</td>' +
+                '<td>' + (x.duration === 'forever' ? 'Навсегда' : x.duration + ' дней') + '</td>' +
+                '<td>' + (x.status === 'used' ? 'Использован' : 'Свободен') + '</td>' +
+                '</tr>'
+            ).join('');
+        }
+
+        async function createKey() {
+            if (!sb) return notConfigured();
+            if (rateLimited('createKey', 2000)) return alert('Не так быстро.');
+            const d = document.getElementById('keyDuration').value;
+            const { data, error } = await sb.rpc('create_key', { dur: d });
+            if (error) return alert('Ошибка: ' + (error.message || 'нет прав админа'));
+            document.getElementById('newKey').innerHTML =
+                '<div class="status-box" style="color:#fbbf8a;">Новый ключ: <span class="key-code">' + esc(data) + '</span></div>';
+            renderKeys();
+        }
+
+        // ── Admin: admins ──
+        async function renderAdmins() {
+            const box = document.getElementById('adminList');
+            if (!box || !sb) return;
+            if (rateLimited('renderAdmins', 1500)) return;
+            const { data, error } = await sb.from('admin_allowlist').select('email');
+            if (error) { box.innerHTML = ''; return; }
+            box.innerHTML = data.length ?
+                data.map(a => '<span class="uid-chip" style="margin:0 6px 6px 0;">' + esc(a.email) + '</span>').join('') :
+                '<span style="color:#888;font-size:13px;">Список пуст</span>';
+        }
+
+        async function addAdmin() {
+            if (!sb) return notConfigured();
+            if (rateLimited('addAdmin', 3000)) return alert('Слишком часто.');
+            const input = document.getElementById('newAdminInput');
+            const val = input.value.trim().toLowerCase();
+            if (!val) return alert('Введи email.');
+            const { error } = await sb.rpc('promote_admin', { target_email: val });
+            if (error) return alert('Ошибка: ' + (error.message || 'нет прав админа'));
+            input.value = '';
+            renderAdmins();
+            alert(val + ' теперь в списке админов. Права применятся сразу, если этот email уже регистрировался, либо при следующей регистрации.');
+        }
+
+        // ── Admin: создать промокод ──
+        async function createPromo() {
+            if (!sb) return notConfigured();
+            if (rateLimited('createPromo', 3000)) return alert('Не так быстро.');
+            const code = document.getElementById('newPromoCode').value.trim().toUpperCase();
+            const discount = parseInt(document.getElementById('newPromoDiscount').value);
+            const usage_limit = document.getElementById('newPromoLimit').value ? parseInt(document.getElementById('newPromoLimit')
+                .value) : null;
+            const expires_at = document.getElementById('newPromoExpires').value || null;
+
+            if (!code || isNaN(discount) || discount < 0 || discount > 100) {
+                alert('Заполните код и скидку (0–100).');
+                return;
+            }
+
+            const { error } = await sb
+                .from('promocodes')
+                .insert({ code, discount, usage_limit, expires_at, active: true });
+
+            if (error) {
+                alert('Ошибка: ' + error.message);
+                return;
+            }
+            document.getElementById('promoCreateResult').innerHTML =
+                '<div class="status-box" style="color:#34d399;">✅ Промокод создан!</div>';
+            document.getElementById('newPromoCode').value = '';
+            document.getElementById('newPromoDiscount').value = '';
+            document.getElementById('newPromoLimit').value = '';
+            document.getElementById('newPromoExpires').value = '';
+        }
+
+        // ── Активация ключа ──
+        async function activateKey() {
+            if (!sb) return notConfigured();
+            if (rateLimited('activateKey', 2000)) return alert('Не так быстро.');
+            const input = document.getElementById('keyInput');
+            const raw = input.value.trim().toUpperCase();
+            if (!raw) return alert('Введи ключ.');
+            const { data, error } = await sb.rpc('redeem_key', { key_code: raw });
+            if (error) {
+                const msg = error.message || '';
+                if (msg.indexOf('KEY_NOT_FOUND') !== -1) return alert('Такой ключ не найден.');
+                if (msg.indexOf('KEY_USED') !== -1) return alert('Этот ключ уже использован.');
+                return alert('Ошибка активации: ' + msg);
+            }
+            input.value = '';
+            document.getElementById('activateMsg').innerHTML =
+                '<div class="status-box" style="color:#fbbf8a;">Ключ активирован! Лицензия: ' + esc(data) + '</div>';
+            showAccount();
+        }
+
+        // ── Показать кабинет ──
+        async function showAccount(scroll) {
+            if (!sb) return;
+            if (rateLimited('showAccount', 1000)) return;
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) { setAuthUI(false);
+                document.getElementById('account').style.display = 'none';
+                document.getElementById('admin').style.display = 'none'; return; }
+            setAuthUI(true);
+
+            const { data: profile, error } = await sb.from('profiles').select('*').eq('id', user.id).single();
+            if (error || !profile) return;
+
+            document.getElementById('account').style.display = 'block';
+            currentProfile = profile;
+
+            document.getElementById('profile').innerHTML =
+                '<div class="profile-line">Email: <b>' + esc(profile.email || user.email) + '</b></div>' +
+                '<div class="profile-line">UID: <span class="uid-chip">' + esc(fmtUid(profile.uid)) + '</span></div>' +
+                '<div class="profile-line">Лицензия: <b style="color:#fb923c;">' + esc(profile.license || 'не активирована') +
+                '</b></div>' +
+                (profile.admin ? '<div class="profile-line">Статус: <b style="color:#fb923c;">Администратор</b></div>' : '');
+
+            renderHwidStatus(profile);
+
+            if (scroll || wantCabinet) { wantCabinet = false;
+                scrollToAccount(); }
+
+            if (profile.admin) {
+                document.getElementById('admin').style.display = 'block';
+                renderKeys();
+                renderAdmins();
+                allUsers = [];
+                renderUsers();
+            } else {
+                document.getElementById('admin').style.display = 'none';
+            }
+        }
+
+        // ── Fade-in on scroll ──
+        (function observeFade() {
+            const els = document.querySelectorAll('.fade-up');
+            if (!els.length) return;
+            const observer = new IntersectionObserver((entries) => {
+                for (const e of entries) {
+                    if (e.isIntersecting) e.target.classList.add('visible');
+                }
+            }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+            for (const el of els) observer.observe(el);
+        })();
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') { closeAuth(); closeMenu(); }
+        });
+
+
+        // Interactive list preview (adapted from the supplied React component)
+        (function initInteractivePreview() {
+          const list = document.getElementById('interactiveList');
+          const preview = document.getElementById('interactivePreview');
+          const image = document.getElementById('interactivePreviewImg');
+          if (!list || !preview || !image) return;
+          const rows = Array.from(list.querySelectorAll('.interactive-row'));
+          const coarse = window.matchMedia('(pointer: coarse)').matches;
+          function activate(row) {
+            rows.forEach(item => item.classList.toggle('is-active', item === row));
+            if (row.dataset.preview && image.src !== row.dataset.preview) image.src = row.dataset.preview;
+            preview.classList.add('visible');
+          }
+          rows.forEach(row => {
+            row.addEventListener('mouseenter', () => { if (!coarse) activate(row); });
+            row.addEventListener('focus', () => activate(row));
+            row.addEventListener('click', () => activate(row));
+            row.addEventListener('keydown', event => {
+              if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(row); }
+            });
+          });
+          if (!coarse) {
+            list.addEventListener('mouseleave', () => preview.classList.remove('visible'));
+          }
+        })();
+
+        // ── Init ──
+        (async function init() {
+            if (!sb) return;
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) await showAccount(false);
+            else setAuthUI(false);
+
+            sb.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_OUT') { setAuthUI(false); return; }
+                if (session) showAccount(false);
+            });
+
+            setTimeout(() => {
+                document.getElementById('ddosWarning').classList.remove('active');
+            }, 5000);
+        })();
+    </script>
+</body>
+</html>
